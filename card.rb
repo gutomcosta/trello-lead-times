@@ -1,7 +1,8 @@
 class Card
 
-  def initialize(trello_card, lead_time_list)
+  def initialize(trello_card, lead_time_list, cycle_time_list)
     @trello_card = trello_card
+    @cycle_time_list = cycle_time_list
   end
 
 
@@ -26,7 +27,8 @@ class Card
       seconds: get_seconds(created_at[:date], last_moviment[:date]),
       days: get_days(created_at[:date], last_moviment[:date]),
       labels: get_labels(),
-      week: get_week_num(last_moviment[:date]) 
+      week: get_week_num(last_moviment[:date]),
+      cycle_time_days: get_days(created_at[:date], get_cycle_time)
     }
   
   end
@@ -42,6 +44,14 @@ class Card
 
 
   private
+
+  def get_cycle_time
+    moviments = get_card_moviments
+    moviments.each do |moviment|
+      return moviment[:date] if moviment[:to]["name"] == @cycle_time_list
+    end
+    return ""
+  end
 
   def get_week_num(finish)
     return 0 if (not finish.present?)
