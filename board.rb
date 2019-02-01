@@ -27,4 +27,15 @@ class Board
     end
   end
 
+  def is_waiting_list?(list_name)
+    @waiting_lists.any? {|name| name==list_name}
+  end
+  
+  def is_working_list?(list_name)
+    @work_lists.any? {|name| name==list_name}
+  end
+
+  def is_done_list(list_name)
+    done_card == list_name
+  end
 end

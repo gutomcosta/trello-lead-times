@@ -7,18 +7,16 @@ class Card
     @trello_card = trello_card
     @board = board
     @moviments = Moviments.new
+    @moviments = get_card_moviments
   end
 
 
   def to_hash
-    binding.pry
-
     created_at = get_card_created_info
-    moviments = get_card_moviments
-    last_moviment = moviments.first
+    last_moviment = @moviments.first
     puts last_moviment.inspect
     if last_moviment.nil?
-      last_moviment = moviments.no_movimens
+      last_moviment = @moviments.no_movimens
     end
     {
       name: @trello_card.name,
@@ -31,33 +29,37 @@ class Card
       labels: get_labels(),
       week: get_week_num(last_moviment.date),
       cycle_time_days: get_days(created_at[:date], get_cycle_time.date),
-      waiting_time: get_waiting_time
+      waiting_time: get_waiting_time, 
+      working_time: get_working_time
     }
   
   end
 
   def print_list_historic
     created_at = get_card_created_info
-    moviments = get_card_moviments
     puts "card: #{@trello_card.name} - created at: #{created_at[:date]} in #{created_at[:list]} - moviments:"
-    moviments.all.each do |moviment|
+    @moviments.all.each do |moviment|
       puts "         #{moviment.to_s}"
     end 
   end
 
-
-
   def get_waiting_time
-  
+    @moviments.calculate_waiting_time(get_created_date, @board)
+  end
+
+  def get_working_time
+    @moviments.calculate_working_time(@board)
+  end
+
+
+  def get_created_date
+    created_at = get_card_created_info
+    created_at[:date]
   end
 
   def get_cycle_time
-    moviments = get_card_moviments
-    moviment = moviments.get_moviment_of(list_name: @board.cycle_time_list)
-    return moviments.no_moviment if moviment.nil?
-    # moviments.each do |moviment|
-    #   return moviment[:date] if moviment[:to]["name"] == @board.cycle_time_list
-    # end
+    moviment = @moviments.get_moviment_of(list_name: @board.cycle_time_list)
+    return @moviments.no_moviment if moviment.nil?
     return moviment
   end
 
@@ -110,11 +112,6 @@ class Card
             to: action.data["listAfter"],
             date: action.date 
           )
-          # moviments << {
-          #   from: action.data["listBefore"],
-          #   to: action.data["listAfter"],
-          #   date: action.date 
-          # }
         end
       end
     end

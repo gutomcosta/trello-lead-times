@@ -27,7 +27,7 @@ class TrelloAnalysis
     lead_time_cards = ['comprometido', 'em andamento', 'Pull Request','aguardando deploy', 'homologando','produção']
     waiting_lists = ['comprometido', 'Pull Request','aguardando deploy']
     work_lists = ['em andamento', 'homologando']
-
+    binding.pry
     if trello_board 
       board = Board.new(
         trello_board: trello_board, 
