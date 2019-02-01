@@ -1,34 +1,37 @@
-class Card
+require_relative 'moviments'
 
-  def initialize(trello_card, lead_time_list, cycle_time_list)
+class Card
+  attr_reader :trello_card
+
+  def initialize(trello_card, board)
     @trello_card = trello_card
-    @cycle_time_list = cycle_time_list
+    @board = board
+    @moviments = Moviments.new
   end
 
 
   def to_hash
+    binding.pry
+
     created_at = get_card_created_info
     moviments = get_card_moviments
     last_moviment = moviments.first
     puts last_moviment.inspect
     if last_moviment.nil?
-      binding.pry
-      last_moviment ={
-        date: "",
-        to: {name: ""}
-      }
+      last_moviment = moviments.no_movimens
     end
     {
       name: @trello_card.name,
       created_at: created_at[:date],
       start_list: created_at[:list],
-      finished_at: last_moviment[:date] || "",
-      finish_list: last_moviment[:to]["name"] || "",  
-      seconds: get_seconds(created_at[:date], last_moviment[:date]),
-      days: get_days(created_at[:date], last_moviment[:date]),
+      finished_at: last_moviment.date || "",
+      finish_list: last_moviment.to || "",  
+      seconds: get_seconds(created_at[:date], last_moviment.date),
+      days: get_days(created_at[:date], last_moviment.date),
       labels: get_labels(),
-      week: get_week_num(last_moviment[:date]),
-      cycle_time_days: get_days(created_at[:date], get_cycle_time)
+      week: get_week_num(last_moviment.date),
+      cycle_time_days: get_days(created_at[:date], get_cycle_time.date),
+      waiting_time: get_waiting_time
     }
   
   end
@@ -37,20 +40,25 @@ class Card
     created_at = get_card_created_info
     moviments = get_card_moviments
     puts "card: #{@trello_card.name} - created at: #{created_at[:date]} in #{created_at[:list]} - moviments:"
-    moviments.each do |moviment|
-      puts "         from: #{moviment[:from]["name"]} -> #{moviment[:to]["name"]} - #{moviment[:date]}"
+    moviments.all.each do |moviment|
+      puts "         #{moviment.to_s}"
     end 
   end
 
 
-  private
+
+  def get_waiting_time
+  
+  end
 
   def get_cycle_time
     moviments = get_card_moviments
-    moviments.each do |moviment|
-      return moviment[:date] if moviment[:to]["name"] == @cycle_time_list
-    end
-    return ""
+    moviment = moviments.get_moviment_of(list_name: @board.cycle_time_list)
+    return moviments.no_moviment if moviment.nil?
+    # moviments.each do |moviment|
+    #   return moviment[:date] if moviment[:to]["name"] == @board.cycle_time_list
+    # end
+    return moviment
   end
 
   def get_week_num(finish)
@@ -95,17 +103,22 @@ class Card
   def get_card_moviments
     moviments = []
     get_actions.each do |action|
-      if action.type == "updateCard" 
+      if action.type == "updateCard" || action.type == 'createCard'
         if action.data.include?("listBefore")
-          moviments << {
+          @moviments.register_moviment(
             from: action.data["listBefore"],
             to: action.data["listAfter"],
             date: action.date 
-          }
+          )
+          # moviments << {
+          #   from: action.data["listBefore"],
+          #   to: action.data["listAfter"],
+          #   date: action.date 
+          # }
         end
       end
     end
-    moviments
+    @moviments
   end
 
   def get_actions

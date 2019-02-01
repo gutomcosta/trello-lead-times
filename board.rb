@@ -1,18 +1,21 @@
 require_relative 'card'
 
 class Board
+  attr_reader :lead_time_cards, :cycle_time_list, :waiting_lists, :work_lists
 
-  def initialize(trello_board, done_card, lead_time_cards, cycle_time_list)
+  def initialize(trello_board:, done_card:, lead_time_cards:, cycle_time_list:, waiting_lists:, work_lists:)
     @trello_board = trello_board
     @done_card = done_card
     @lead_time_cards = lead_time_cards
     @cycle_time_list = cycle_time_list
+    @waiting_lists = waiting_lists
+    @work_lists = work_lists
   end
 
   def done_cards
     list = get_done_list
     list.cards.map do |trello_card|
-      Card.new(trello_card,@lead_time_cards, @cycle_time_list)      
+      Card.new(trello_card,self)
     end
   end
 

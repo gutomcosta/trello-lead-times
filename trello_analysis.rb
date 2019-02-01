@@ -23,12 +23,22 @@ class TrelloAnalysis
 
 
   def analyze
-    trello_board = get_board('Beep Fluxo Unificado - Agendamento nos Apps')
-    lead_time_cards = ['comprometido', 'em andamento', 'aguardando deploy', 'produção']
+    trello_board = get_board('Beep Fluxo Unificado')
+    lead_time_cards = ['comprometido', 'em andamento', 'Pull Request','aguardando deploy', 'homologando','produção']
+    waiting_lists = ['comprometido', 'Pull Request','aguardando deploy']
+    work_lists = ['em andamento', 'homologando']
+
     if trello_board 
-      binding.pry
-      board = Board.new(trello_board, 'produção', lead_time_cards, 'homologando')
+      board = Board.new(
+        trello_board: trello_board, 
+        done_card: 'produção', 
+        lead_time_cards: lead_time_cards, 
+        cycle_time_list: 'homologando', 
+        waiting_lists: waiting_lists, 
+        work_lists: work_lists)
+
       cards = board.done_cards
+      binding.pry
       data = cards.map {|card| card.to_hash }
       save_to_csv(data)
 
